@@ -1,0 +1,213 @@
+---
+title: "sis-HMRF: Spatial Immune State Inference in BRCA Visium"
+author: "Tao Zhu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{sis-HMRF: BRCA Visium Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse   = TRUE,
+  comment    = "#>",
+  fig.width  = 6,
+  fig.height = 5,
+  message    = FALSE,
+  warning    = FALSE
+)
+```
+
+## Overview
+
+The `sisHMRF` package implements a continuous-latent-variable hidden Markov
+random field for inferring immune state landscapes from spatial transcriptomics
+data. Unlike discrete-domain HMRF methods (BayesSpace, SC-MEB) that partition
+tissue into sharp clusters, sis-HMRF models immune archetypes as continuous
+latent variables under a Gaussian Markov random field (GMRF) prior.
+
+This vignette demonstrates the core workflow using a 10x Visium breast cancer
+(BRCA) dataset.
+
+## Installation
+
+```r
+# From source
+install.packages("sisHMRF_0.1.0.tar.gz", repos = NULL, type = "source")
+
+# Dependencies
+install.packages(c("Matrix", "FNN", "ggplot2", "scales", "reshape2", "patchwork"))
+```
+
+## Core workflow
+
+### Step 1: Load spatial transcriptomics data
+
+The package includes a pre-computed immune feature matrix from a BRCA Visium
+sample (500 spots subset). For users with their own Visium data, see the
+**Preparing your own data** section below.
+
+```{r load-example}
+library(sisHMRF)
+
+# Load bundled BRCA example dataset
+brca_path <- system.file("extdata", "brca_example.rds", package = "sisHMRF")
+brca <- readRDS(brca_path)
+
+cat(sprintf("Spots: %d  |  Features: %d\n",
+            brca$n_spots, ncol(brca$F_mat)))
+cat(sprintf("Feature categories:\n"))
+print(table(brca$feature_categories))
+```
+
+### Step 2: Build immune feature matrix
+
+For the bundled example, features are pre-computed. For your own expression
+matrix, use `sis_features()`:
+
+```{r features, eval=FALSE}
+# expr_mat: N×G normalized expression matrix
+features <- sis_features(expr_mat, verbose = TRUE)
+print(features)
+
+# Inspect feature matrix
+dim(features$F_mat)
+head(features$feature_names)
+table(features$feature_categories)
+```
+
+### Step 3: Fit sis-HMRF model
+
+```{r fit}
+fit <- sis_fit(
+  F_mat   = brca$F_mat,
+  coords  = brca$coords,
+  P       = 3,       # 3 latent immune dimensions
+  k       = 6,       # 6 nearest neighbors
+  verbose = FALSE
+)
+
+# Model summary
+print(fit)
+```
+
+```{r fit-details}
+summary(fit)
+```
+
+### Step 4: Visualize results
+
+**Latent immune dimensions** — each panel shows one dimension's spatial
+distribution across the tissue.
+
+```{r vis-panel, fig.height=4, fig.width=9}
+plot(fit, brca$coords, type = "panel")
+```
+
+**Immune scores** — IAS (activation), ISS (suppression), IBI (balance index).
+
+```{r vis-scores, fig.height=3.5, fig.width=9}
+plot(fit, brca$coords, type = "scores")
+```
+
+**Immune gradient** — continuous transition zones between immune activation and
+suppression.
+
+```{r vis-gradient, fig.height=5, fig.width=6}
+plot(fit, brca$coords, type = "gradient")
+```
+
+**Post-hoc immune archetypes** — k-means clustering of latent dimensions reveals
+discrete immune states (IS1--IS4).
+
+```{r vis-archetypes, fig.height=5, fig.width=7}
+plot(fit, brca$coords, type = "archetypes", K = 4)
+```
+
+**Feature loadings** — which immune features drive each latent dimension.
+
+```{r vis-loadings, fig.height=6, fig.width=6}
+plot(fit, brca$coords, type = "loadings")
+```
+
+**ELBO convergence** — verify model optimization.
+
+```{r vis-elbo, fig.height=4, fig.width=5}
+plot(fit, brca$coords, type = "elbo")
+```
+
+### Step 5: Extract immune scores
+
+```{r scores}
+scores <- sis_scores(fit)
+cat("Top 6 spots by immune balance index (IBI):\n")
+high_ibi <- order(scores[, "IBI"], decreasing = TRUE)
+print(head(scores[high_ibi, ]))
+
+cat(sprintf("\nIAS range: [%.3f, %.3f]\n", min(scores[,1]), max(scores[,1])))
+cat(sprintf("ISS range: [%.3f, %.3f]\n", min(scores[,2]), max(scores[,2])))
+cat(sprintf("IBI range: [%.3f, %.3f]\n", min(scores[,3]), max(scores[,3])))
+```
+
+### Step 6: Model selection (optional)
+
+```{r model-selection, eval=FALSE}
+bic_results <- sis_select_P(brca$F_mat, brca$coords, P_max = 8, k = 6)
+print(bic_results)
+
+# Plot BIC
+plot(bic_results$P, bic_results$BIC, type = "b",
+     xlab = "P (latent dimensions)", ylab = "BIC",
+     main = "Model Selection via BIC")
+```
+
+## Preparing your own data
+
+If you have raw 10x Visium data (Space Ranger output):
+
+```{r own-data, eval=FALSE}
+# Using Seurat to load Visium data
+library(Seurat)
+seurat_obj <- Load10X_Spatial("path/to/visium/sample")
+count_matrix <- GetAssayData(seurat_obj, slot = "counts")
+coords <- GetTissueCoordinates(seurat_obj)
+
+# Normalize
+expr_mat <- log1p(sweep(count_matrix, 1, rowSums(count_matrix) / 1e4, "/"))
+
+# Build immune features
+features <- sis_features(expr_mat)
+
+# Fit model
+fit <- sis_fit(features$F_mat, coords, P = 3, k = 6)
+
+# Visualize
+plot(fit, coords, type = "panel")
+plot(fit, coords, type = "scores")
+```
+
+## Key parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `P` | Number of latent immune dimensions | 3 |
+| `k` | Spatial neighbors for graph | 6 |
+| `max_iter` | Maximum EM iterations | 500 |
+| `tol` | Convergence tolerance (ELBO relative change) | 1e-6 |
+| `init_method` | Initialization: "pca" or "random" | "pca" |
+
+## Output scores
+
+| Score | Name | Interpretation |
+|-------|------|----------------|
+| IAS | Immune Activation Score | Higher = more immune activation |
+| ISS | Immune Suppression Score | Higher = more immune suppression |
+| IBI | Immune Balance Index | 0 = suppression-dominant, 1 = activation-dominant |
+
+## Session info
+
+```{r session-info}
+sessionInfo()
+```

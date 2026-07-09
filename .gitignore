@@ -1,0 +1,15 @@
+# R package files
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+src/*.o
+src/*.so
+src/*.dll
+
+# Package artifacts
+sisHMRF_*.tar.gz
+sisHMRF.Rcheck/
+
+# macOS
+.DS_Store

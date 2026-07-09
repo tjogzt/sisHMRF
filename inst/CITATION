@@ -1,0 +1,14 @@
+citHeader("To cite sisHMRF in publications use:")
+
+citEntry(
+  entry    = "Article",
+  title    = "sis-HMRF: Continuous-latent-variable hidden Markov random field
+              for spatial immune state inference in the tumor microenvironment",
+  author   = personList(as.person("Tao Zhu")),
+  journal  = "bioRxiv",
+  year     = "2026",
+  note     = "Manuscript in preparation",
+  textVersion = "Zhu, T. (2026). sis-HMRF: Continuous-latent-variable hidden
+                 Markov random field for spatial immune state inference.
+                 bioRxiv, in preparation."
+)
