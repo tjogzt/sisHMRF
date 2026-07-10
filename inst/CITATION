@@ -7,6 +7,8 @@ citEntry(
   author   = personList(as.person("Tao Zhu")),
   journal  = "bioRxiv",
   year     = "2026",
+  doi      = "10.5281/zenodo.21287416",
+  url      = "https://doi.org/10.5281/zenodo.21287416",
   note     = "Manuscript in preparation",
   textVersion = "Zhu, T. (2026). sis-HMRF: Continuous-latent-variable hidden
                  Markov random field for spatial immune state inference.
