@@ -1,6 +1,6 @@
 # sisHMRF
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21287416.svg)](https://doi.org/10.5281/zenodo.21287416)
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.21287416.svg)](https://doi.org/10.5281/zenodo.21287416)
 
 **Spatial Immune Scoring with Hidden Markov Random Field**
 
