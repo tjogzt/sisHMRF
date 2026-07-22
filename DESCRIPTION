@@ -1,7 +1,7 @@
 Package: sisHMRF
 Type: Package
 Title: Spatial Immune State Inference via Hidden Markov Random Fields
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Tao", "Zhu", email = "zhutao@tjh.tjmu.edu.cn",
            role = c("aut", "cre"),

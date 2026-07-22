@@ -119,8 +119,8 @@ suppression.
 plot(fit, brca$coords, type = "gradient")
 ```
 
-**Post-hoc immune archetypes** — k-means clustering of latent dimensions reveals
-discrete immune states (IS1--IS4).
+**Post-hoc immune archetypes** — hierarchical clustering (Ward's D2) of latent
+dimensions reveals discrete immune states (IS1--IS4).
 
 ```{r vis-archetypes, fig.height=5, fig.width=7}
 plot(fit, brca$coords, type = "archetypes", K = 4)
@@ -196,7 +196,7 @@ plot(fit, coords, type = "scores")
 | `k` | Spatial neighbors for graph | 6 |
 | `max_iter` | Maximum EM iterations | 500 |
 | `tol` | Convergence tolerance (ELBO relative change) | 1e-6 |
-| `init_method` | Initialization: "pca" or "random" | "pca" |
+| `perturb_sd` | Gaussian noise SD for perturbed init (0 = off) | 0 |
 
 ## Output scores
 

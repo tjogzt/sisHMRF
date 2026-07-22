@@ -2,9 +2,10 @@
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.21287416.svg?v=1)](https://doi.org/10.5281/zenodo.21287416)
 
-**Spatial Immune Scoring with Hidden Markov Random Field**
+**Spatial Immune State Inference via Hidden Markov Random Fields**
 
-A VI-EM framework for deconvolving spatially-organized immune states in spatial transcriptomics data.
+Continuous-latent-variable hidden Markov random field for inferring immune
+state landscapes from spatial transcriptomics data.
 
 ## Installation
 
@@ -17,28 +18,29 @@ remotes::install_github("tjogzt/sisHMRF")
 ```r
 library(sisHMRF)
 
-# Load example BRCA Visium data (500 spots, 28 immune features)
-data("sisHMRF_data")
+# Build immune feature matrix from expression data
+feats <- sis_features(expr_mat)
+#       returns list(F_mat, feature_names, feature_categories, n_features)
 
-# Fit the model
-fit <- sis_fit(
-  Y = sisHMRF_data$F_mat,
-  adjacency = build_spatial_graph(sisHMRF_data$coords, method = "knn", k = 6),
-  P = 5, n_init = 3
-)
+# Fit the spatial immune state model
+fit <- sis_fit(F_mat = feats$F_mat, coords = coords, P = 3, k = 6)
 
 # Visualize results
-sis_plot_scores(fit, coords = sisHMRF_data$coords)
-sis_plot_panel(fit, coords = sisHMRF_data$coords)
+plot(fit, coords, type = "panel")       # latent dimensions
+plot(fit, coords, type = "archetypes")  # immune archetypes (IS1-IS4)
+plot(fit, coords, type = "gradient")    # immune transition zones
+
+# Extract immune scores
+scores <- sis_scores(fit)  # IAS, ISS, IBI
 ```
 
 ## Features
 
-- **VI-EM core engine** — Variational inference with expectation-maximization for spatial HMRF with immune-informed priors
-- **28 immune features** — Across functional categories (checkpoint, cytolytic, antigen presentation, etc.)
-- **Spatial scoring** — Immune Archetype Score (IAS), Immune State Score (ISS), Immune Boundary Index (IBI) with empirical Bayesian confidence intervals
-- **Model selection** — BIC-based selection of the number of spatial domains (sis_select_P)
-- **Publication-ready visualizations** — 8 ggplot2-based plot types
+- **GMRF-based continuous latent states** — models immune archetypes as a smooth spatial continuum rather than discrete clusters
+- **26 immune features** — 17 pathway signatures + 9 cell-type scores covering the full cancer-immunity cycle
+- **Spatial scoring** — Immune Activation Score (IAS), Immune Suppression Score (ISS), Immune Balance Index (IBI)
+- **Model selection** — BIC-based selection of latent dimension count (`sis_select_P`)
+- **Publication-ready visualizations** — ggplot2-based plots with 7pt base theme
 
 ## Citation
 
