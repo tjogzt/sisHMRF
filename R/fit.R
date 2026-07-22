@@ -21,6 +21,9 @@
 #' @param tol Numeric. Convergence tolerance on ELBO relative change
 #'   (default: 1e-6).
 #' @param verbose Logical. Print progress if TRUE (default: TRUE).
+#' @param perturb_sd Numeric. Standard deviation of Gaussian noise added to
+#'   PCA-initialized Z_mean and W. Use to escape local optima. Set to 0 to
+#'   disable (default: 0). Recommended: 0.3 -- 0.7 for real data.
 #'
 #' @return An object of class `sisHMRF`, a list with components:
 #'   \item{Z_mean}{N x P matrix of posterior mean latent states.}
@@ -61,11 +64,12 @@
 #' @export
 sis_fit <- function(
     F_mat, coords,
-    P        = 3,
-    k        = 6,
-    max_iter = 500,
-    tol      = 1e-6,
-    verbose  = TRUE
+    P          = 3,
+    k          = 6,
+    max_iter   = 500,
+    tol        = 1e-6,
+    verbose    = TRUE,
+    perturb_sd = 0
 ) {
   # ---- Input validation ----
   if (!is.matrix(F_mat)) stop("F_mat must be a matrix")
@@ -101,6 +105,14 @@ sis_fit <- function(
   sigma2 <- init$sigma2
   rho    <- init$rho
   tau2   <- init$tau2
+
+  # Perturb initialization to escape local optima
+  if (perturb_sd > 0) {
+    if (verbose) cat("Applying perturbed initialization (sd =", perturb_sd, ")...\n")
+    set.seed(49)  # reproducible perturbation
+    Z_mean <- Z_mean + matrix(rnorm(N * P, 0, perturb_sd), N, P)
+    W      <- W + matrix(rnorm(D * P, 0, perturb_sd), D, P)
+  }
 
   # ---- EM loop ----
   elbo_hist <- numeric(max_iter)

@@ -11,7 +11,8 @@ sis_fit(
   k = 6,
   max_iter = 500,
   tol = 1e-06,
-  verbose = TRUE
+  verbose = TRUE,
+  perturb_sd = 0
 )
 }
 \arguments{
@@ -31,6 +32,10 @@ columns = features. Must be normalized (centered/scaled recommended).}
 (default: 1e-6).}
 
 \item{verbose}{Logical. Print progress if TRUE (default: TRUE).}
+
+\item{perturb_sd}{Numeric. Standard deviation of Gaussian noise added to
+PCA-initialized Z_mean and W. Use to escape local optima. Set to 0 to
+disable (default: 0). Recommended: 0.3 -- 0.7 for real data.}
 }
 \value{
 An object of class \code{sisHMRF}, a list with components:
